@@ -10,7 +10,12 @@
 
 <script type="text/javascript" src="//apis.daum.net/maps/maps3.js?apikey=5ee27d4d783eb83c77c1def985b530a1"></script>
 <script src="https://code.jquery.com/jquery-3.0.0.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" crossorigin="anonymous">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" crossorigin="anonymous"></script>
 <script>
+
+
     var mapContainer = document.getElementById('map'), // 지도를 표시할 div
             mapOption = {
                 center: new daum.maps.LatLng(33.450701, 126.570667), // 지도의 중심좌표
@@ -18,25 +23,52 @@
             };
 
     var map = new daum.maps.Map(mapContainer, mapOption); // 지도를 생성합니다
+    var regPoiBtn;
+    daum.maps.event.addListener(map, 'rightclick', function(mouseEvent) {
+        if (regPoiBtn != null)  regPoiBtn.close();
+        var latlng = mouseEvent.latLng;
+        regPoiBtn = new daum.maps.InfoWindow({
+            map: map, // 인포윈도우가 표시될 지도
+            position : latlng,
+            content :  '<button class="btn btn-default btn-block" onclick="regPoi('
+                + latlng.getLat() + ',' + latlng.getLng() + ')">지점을 등록하시겠습니까?</button>',
+            removable : false
+        });
+    });
 
-    $.get("/rest/poi", function (pois) {
-        // 마커 이미지의 이미지 주소입니다
-        var imageSrc = "http://i1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png";
+    daum.maps.event.addListener(map, 'click', function(mouseEvent) {
+       if (regPoiBtn != null)  regPoiBtn.close();
+    });
 
-        for (var i = 0; i < pois.length; i ++) {
-            // 마커 이미지의 이미지 크기 입니다
-            var imageSize = new daum.maps.Size(24, 35);
-            // 마커 이미지를 생성합니다
-            var markerImage = new daum.maps.MarkerImage(imageSrc, imageSize);
-            // 마커를 생성합니다
-            var marker = new daum.maps.Marker({
-                map: map, // 마커를 표시할 지도
-                position: new daum.maps.LatLng(pois[i].lat, pois[i].lng), // 마커를 표시할 위치
-                title : pois[i].title, // 마커의 타이틀, 마커에 마우스를 올리면 타이틀이 표시됩니다
-                image : markerImage // 마커 이미지
-            });
-        }
-    })
+    loadPois();
+
+    function regPoi(lat, lng) {
+        if (regPoiBtn != null)  regPoiBtn.close();
+        $.post("/rest/poi", {lat: lat, lng: lng}, function (result) {
+            loadPois();
+        });
+    }
+
+    function loadPois() {
+        $.get("/rest/poi", function (pois) {
+            // 마커 이미지의 이미지 주소입니다
+            var imageSrc = "http://i1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png";
+
+            for (var i = 0; i < pois.length; i ++) {
+                // 마커 이미지의 이미지 크기 입니다
+                var imageSize = new daum.maps.Size(24, 35);
+                // 마커 이미지를 생성합니다
+                var markerImage = new daum.maps.MarkerImage(imageSrc, imageSize);
+                // 마커를 생성합니다
+                var marker = new daum.maps.Marker({
+                    map: map, // 마커를 표시할 지도
+                    position: new daum.maps.LatLng(pois[i].lat, pois[i].lng), // 마커를 표시할 위치
+                    title : pois[i].title, // 마커의 타이틀, 마커에 마우스를 올리면 타이틀이 표시됩니다
+                    image : markerImage // 마커 이미지
+                });
+            }
+        });
+    }
 </script>
 </body>
 </html>

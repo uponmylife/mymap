@@ -17,4 +17,11 @@ public class PoiRestController {
     public List<Poi> get() {
         return poiRepository.findByMap("test");
     }
+
+    @RequestMapping(method = RequestMethod.POST)
+    public String post(Double lat, Double lng) {
+        Poi poi = new Poi("test", lat, lng);
+        poiRepository.save(poi);
+        return "ok";
+    }
 }
